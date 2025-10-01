@@ -1,12 +1,14 @@
 import cssText from "data-text:~style.css"
 import type { PlasmoCSConfig } from "plasmo"
 
-import { CountButton } from "~features/count-button"
+import { useStorage } from "@plasmohq/storage/hook"
+
+import { AnswerDisplay } from "~features/answer-display"
 
 export const config: PlasmoCSConfig = {
-  matches: ["<all_urls>"]
+  matches: ["<all_urls>"],
+  all_frames: true
 }
-
 /**
  * Generates a style element with adjusted CSS to work correctly within a Shadow DOM.
  *
@@ -38,9 +40,21 @@ export const getStyle = (): HTMLStyleElement => {
 }
 
 const PlasmoOverlay = () => {
+  const [showAnswerOverlay, setShowAnswerOverlay] = useStorage(
+    "showAnswerOverlay",
+    false
+  )
+
+  if (!showAnswerOverlay) return null
+
   return (
     <div className="plasmo-z-50 plasmo-flex plasmo-fixed plasmo-top-32 plasmo-right-8">
-      <CountButton />
+      <div
+        className="cursor-pointer"
+        onClick={() => setShowAnswerOverlay(false)}>
+        ❌
+      </div>
+      <AnswerDisplay />
     </div>
   )
 }

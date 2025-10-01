@@ -1,33 +1,94 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# Screenshot AI Extension
 
-## Getting Started
+Extension Chrome/Edge để chụp ảnh màn hình và phân tích câu hỏi bằng Gemini AI.
 
-First, run the development server:
+## Tính năng
+
+- **Context Menu**: Chuột phải để chọn "Start Screenshot"
+- **Screenshot Selection**: Kéo chuột để chọn vùng cần phân tích
+- **AI Analysis**: Sử dụng Gemini AI để trích xuất câu hỏi và đáp án
+- **Smart Popup**: Hiển thị kết quả phân tích với câu trả lời đúng
+
+## Cài đặt
+
+1. Build extension:
+
+   ```bash
+   pnpm install
+   pnpm build
+   ```
+
+2. Mở Chrome/Edge Extensions page:
+
+   - Chrome: `chrome://extensions/`
+   - Edge: `edge://extensions/`
+
+3. Bật "Developer mode"
+
+4. Click "Load unpacked" và chọn thư mục `build/chrome-mv3-prod`
+
+## Cách sử dụng
+
+1. **Thiết lập API Key**:
+
+   - Tạo file `.env` trong thư mục root project
+   - Thêm dòng: `PLASMO_PUBLIC_GEMINI_API_KEY=your-api-key-here`
+   - API key lấy từ [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Build lại extension: `pnpm build`
+
+2. **Chụp và phân tích**:
+
+   **Cách 1 - Nhanh (Recommended):**
+
+   - Chuột phải → "Start Screenshot" → chọn vùng câu hỏi
+   - Chuột phải lần nữa → "Hỏi" → nhận kết quả ngay
+   - Screenshot được giữ lại để xem trong popup
+
+   **Cách 2 - Qua popup:**
+
+   - Chuột phải → "Start Screenshot" → chọn vùng câu hỏi
+   - Mở popup extension → click "Hỏi" → xem kết quả
+
+## Cấu trúc project
+
+```
+src/
+├── background.ts           # Background script, xử lý context menu & API
+├── popup.tsx              # Popup UI hiển thị kết quả
+├── contents/
+│   └── screenshot.ts      # Content script cho screenshot selection
+├── types/
+│   └── index.ts          # Type definitions
+└── style.css             # Global styles
+```
+
+## API Requirements
+
+- **Gemini API Key**: Cần API key từ Google AI Studio
+- **Permissions**: contextMenus, activeTab, storage, tabs
+
+## Development
 
 ```bash
+# Dev mode với hot reload
 pnpm dev
-# or
-npm run dev
-```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
-
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
-
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
-
-## Making production build
-
-Run the following:
-
-```bash
+# Build production
 pnpm build
-# or
-npm run build
+
+# Package extension
+pnpm package
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+## Troubleshooting
 
-## Submit to the webstores
+- **Không thấy context menu**: Đảm bảo extension đã được load và có permissions
+- **Lỗi API**: Kiểm tra API key và kết nối internet
+- **Screenshot không hoạt động**: Thử refresh trang và thử lại
+- **Screenshot bị mất**: Screenshot được lưu trong memory, sẽ mất khi restart extension
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+## Technical Notes
+
+- **Storage Approach**: Screenshot được lưu trong in-memory của background script để tránh Chrome storage quota limit
+- **Data Persistence**: Chỉ analysis results được lưu persistent, screenshot sẽ mất khi restart extension
+- **Memory Management**: Extension tự động quản lý memory, chỉ giữ 1 screenshot tại một thời điểm
