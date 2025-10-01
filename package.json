@@ -1,6 +1,6 @@
 {
   "name": "screenshot-ai",
-  "displayName": "Screenshot ai",
+  "displayName": "Screenshot AI",
   "version": "0.0.1",
   "description": "screenshot and ask ai",
   "author": "trantienthanh2412@gmail.com",
@@ -35,7 +35,11 @@
       "activeTab",
       "storage",
       "tabs",
-      "scripting"
-    ]
+      "scripting",
+      "sidePanel"
+    ],
+    "side_panel": {
+      "default_path": "sidepanel.html"
+    }
   }
 }
