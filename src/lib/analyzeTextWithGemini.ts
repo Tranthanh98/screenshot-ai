@@ -25,70 +25,40 @@ export async function analyzeTextWithGemini(
           {
             parts: [
               {
-                text: `Phân tích câu hỏi sau và đưa ra câu trả lời chính xác. Trả về theo format JSON array:
+                text: `Phân tích câu hỏi sau và đưa ra câu trả lời chính xác trong format markdown:
                 
 Câu hỏi: "${question}"
 
-Nếu là câu hỏi trắc nghiệm, trả về:
-[{
-  "question": "câu hỏi",
-  "options": ["A. đáp án A", "B. đáp án B", "..."],
-  "correctAnswer": "đáp án đúng",
-  "type": "multiple-choice"
-}]
+Hãy trả về kết quả phân tích dưới dạng markdown format với các quy tắc sau:
+- Sử dụng heading (##) để phân biệt các câu hỏi nếu có nhiều câu
+- Dùng **bold** để highlight câu hỏi chính
+- Dùng > blockquote cho đáp án đúng
+- Dùng bullet points (-) cho các lựa chọn trắc nghiệm
+- Dùng numbered list (1.) cho câu trả lời có thứ tự
+- Dùng \`code\` cho từ khóa quan trọng
+- Dùng *italic* để nhấn mạnh
 
-Nếu là câu hỏi ngắn hoặc tự luận, trả về:
-[{
-  "question": "câu hỏi",
-  "correctAnswer": "câu trả lời chi tiết",
-  "type": "short-answer"
-}]
+Ví dụ format:
+## Câu hỏi 1
+**Thủ đô của Việt Nam là gì?**
 
-Nếu là câu hỏi điền chỗ trống, trả về:
-[{
-  "question": "câu hỏi",
-  "correctAnswer": ["đáp án 1", "đáp án 2", "..."],
-  "type": "fill-in-the-blank"
-}]
+- A. TP.HCM
+- B. Hà Nội  
+- C. Đà Nẵng
+- D. Cần Thơ
 
-Phải trả về đúng format JSON array, không thêm chú thích.`
+> **Đáp án:** B. Hà Nội
+
+---
+
+Trả về markdown thuần túy, không wrap trong code block hay JSON.`
               }
             ]
           }
         ],
         generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                question: {
-                  type: "string",
-                  description: "Câu hỏi"
-                },
-                options: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Các đáp án cho multiple-choice"
-                },
-                correctAnswer: {
-                  description:
-                    "Đáp án đúng - có thể là string hoặc array of strings"
-                },
-                type: {
-                  type: "string",
-                  enum: [
-                    "multiple-choice",
-                    "short-answer",
-                    "fill-in-the-blank"
-                  ],
-                  description: "Loại câu hỏi"
-                }
-              },
-              required: ["type", "correctAnswer"]
-            }
-          }
+          temperature: 0.7,
+          maxOutputTokens: 2048
         }
       })
     }
@@ -97,33 +67,18 @@ Phải trả về đúng format JSON array, không thêm chú thích.`
   const data = await response.json()
 
   if (data.candidates && data.candidates[0]) {
-    const text = data.candidates[0].content.parts[0].text
+    const markdownText = data.candidates[0].content.parts[0].text
 
-    console.log("Gemini text response:", text)
-    try {
-      const jsonMatch = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        return Array.isArray(parsed) ? parsed : [parsed]
-      } else {
-        // Fallback for text questions
-        return [
-          {
-            question: question,
-            correctAnswer: text,
-            type: "short-answer"
-          }
-        ]
+    console.log("Gemini text response:", markdownText)
+
+    // Trả về markdown content thay vì JSON structured data
+    return [
+      {
+        question: question,
+        correctAnswer: markdownText,
+        type: "markdown"
       }
-    } catch (e) {
-      return [
-        {
-          question: question,
-          correctAnswer: text,
-          type: "short-answer"
-        }
-      ]
-    }
+    ]
   }
 
   throw new Error("No response from Gemini AI")

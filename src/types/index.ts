@@ -2,7 +2,7 @@ export interface AnalysisResult {
   question?: string
   options?: string[]
   correctAnswer: string | string[]
-  type: "multiple-choice" | "short-answer" | "fill-in-the-blank"
+  type: "multiple-choice" | "short-answer" | "fill-in-the-blank" | "markdown"
 }
 
 export type AnalysisResults = AnalysisResult[]
