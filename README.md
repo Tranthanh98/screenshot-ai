@@ -42,10 +42,13 @@ Extension Chrome/Edge để chụp ảnh màn hình và phân tích câu hỏi b
    - Chuột phải lần nữa → "Hỏi" → nhận kết quả ngay
    - Screenshot được giữ lại để xem trong popup
 
-   **Cách 2 - Qua popup:**
+   **Cách 2 - Qua SidePanel:**
+   - Chuột phải vào icon Extension -> chọn Open in SidePanel
+   <img width="387" height="517" alt="image" src="https://github.com/user-attachments/assets/5143682f-e66e-4c78-89cc-381fc09c09a5" />
 
-   - Chuột phải → "Start Screenshot" → chọn vùng câu hỏi
-   - Mở popup extension → click "Hỏi" → xem kết quả
+   - Magic open here
+   <img width="451" height="953" alt="image" src="https://github.com/user-attachments/assets/85d4dca5-7250-407c-a94d-33ae68067901" />
+
 
 ## Cấu trúc project
 
