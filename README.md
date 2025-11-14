@@ -30,11 +30,9 @@ Extension Chrome/Edge để chụp ảnh màn hình và phân tích câu hỏi b
 ## Cách sử dụng
 
 1. **Thiết lập API Key**:
-
-   - Tạo file `.env` trong thư mục root project
-   - Thêm dòng: `PLASMO_PUBLIC_GEMINI_API_KEY=your-api-key-here`
    - API key lấy từ [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Build lại extension: `pnpm build`
+   - Mở extension Popup hoặc SidePanel => điền API KEY vào input
+   - Start  
 
 2. **Chụp và phân tích**:
 
