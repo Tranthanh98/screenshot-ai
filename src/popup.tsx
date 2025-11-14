@@ -22,9 +22,14 @@ function IndexPopup() {
     "showAnswerOverlay",
     false
   )
+  const [apiKey, setApiKey] = useStorage<string>("geminiApiKey", "")
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false)
+  const [apiKeyInput, setApiKeyInput] = useState("")
+
+  console.log("lastAnalysis:", lastAnalysis)
 
   // Check if API key is available
-  const hasApiKey = Boolean(storageHelpers.getApiKey())
+  const hasApiKey = Boolean(apiKey)
 
   useEffect(() => {
     // Load existing screenshot from background on popup open
@@ -89,6 +94,37 @@ function IndexPopup() {
     setError(null)
   }
 
+  const handleSaveApiKey = async () => {
+    const trimmedKey = apiKeyInput.trim()
+    if (!trimmedKey) {
+      setError("Vui lòng nhập API key")
+      return
+    }
+    if (!trimmedKey.startsWith("AIza")) {
+      setError("API key không hợp lệ (phải bắt đầu với 'AIza')")
+      return
+    }
+    await storageHelpers.setApiKey(trimmedKey)
+    setApiKey(trimmedKey)
+    setApiKeyInput("")
+    setShowApiKeyInput(false)
+    setError(null)
+  }
+
+  const handleChangeApiKey = () => {
+    setApiKeyInput(apiKey || "")
+    setShowApiKeyInput(true)
+  }
+
+  const handleRemoveApiKey = async () => {
+    if (confirm("Bạn có chắc muốn xóa API key?")) {
+      await storageHelpers.removeApiKey()
+      setApiKey("")
+      setApiKeyInput("")
+      setShowApiKeyInput(true)
+    }
+  }
+
   return (
     <div className="plasmo-w-96 plasmo-p-4 plasmo-bg-white">
       <div className="plasmo-mb-4">
@@ -96,6 +132,71 @@ function IndexPopup() {
           Screenshot AI
         </h1>
       </div>
+
+      {/* API Key Section */}
+      {!hasApiKey || showApiKeyInput ? (
+        <div className="plasmo-mb-4 plasmo-p-4 plasmo-bg-yellow-50 plasmo-rounded-lg plasmo-border plasmo-border-yellow-200">
+          <h3 className="plasmo-font-semibold plasmo-text-sm plasmo-mb-2 plasmo-text-yellow-800">
+            🔑 Cấu hình Gemini API Key
+          </h3>
+          <p className="plasmo-text-xs plasmo-text-yellow-700 plasmo-mb-3">
+            Lấy API key miễn phí tại:{" "}
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              className="plasmo-underline plasmo-text-blue-600">
+              Google AI Studio
+            </a>
+          </p>
+          <input
+            type="password"
+            value={apiKeyInput}
+            onChange={(e) => setApiKeyInput(e.target.value)}
+            placeholder="Nhập API key của bạn..."
+            className="plasmo-w-full plasmo-px-3 plasmo-py-2 plasmo-text-sm plasmo-border plasmo-border-gray-300 plasmo-rounded-lg plasmo-mb-2 focus:plasmo-outline-none focus:plasmo-ring-2 focus:plasmo-ring-blue-500"
+            onKeyPress={(e) => e.key === "Enter" && handleSaveApiKey()}
+          />
+          <div className="plasmo-flex plasmo-space-x-2">
+            <button
+              onClick={handleSaveApiKey}
+              className="plasmo-flex-1 plasmo-py-2 plasmo-rounded-lg plasmo-font-medium plasmo-text-sm plasmo-bg-blue-600 plasmo-text-white hover:plasmo-bg-blue-700">
+              Lưu API Key
+            </button>
+            {hasApiKey && (
+              <button
+                onClick={() => {
+                  setShowApiKeyInput(false)
+                  setApiKeyInput("")
+                  setError(null)
+                }}
+                className="plasmo-px-4 plasmo-py-2 plasmo-rounded-lg plasmo-font-medium plasmo-text-sm plasmo-bg-gray-200 plasmo-text-gray-700 hover:plasmo-bg-gray-300">
+                Hủy
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="plasmo-mb-4 plasmo-p-3 plasmo-bg-green-50 plasmo-rounded-lg plasmo-border plasmo-border-green-200 plasmo-flex plasmo-items-center plasmo-justify-between">
+          <div className="plasmo-flex plasmo-items-center">
+            <span className="plasmo-text-green-600 plasmo-mr-2">✓</span>
+            <span className="plasmo-text-sm plasmo-text-green-800 plasmo-font-medium">
+              API Key đã cấu hình
+            </span>
+          </div>
+          <div className="plasmo-flex plasmo-space-x-2">
+            <button
+              onClick={handleChangeApiKey}
+              className="plasmo-text-xs plasmo-text-blue-600 hover:plasmo-text-blue-800 plasmo-underline">
+              Đổi
+            </button>
+            <button
+              onClick={handleRemoveApiKey}
+              className="plasmo-text-xs plasmo-text-red-600 hover:plasmo-text-red-800 plasmo-underline">
+              Xóa
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Screenshot Section */}
       {lastScreenshot ? (

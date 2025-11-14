@@ -5,11 +5,11 @@ import { storageHelpers } from "~utils/storage"
 export async function analyzeTextWithGemini(
   question: string
 ): Promise<AnalysisResult[]> {
-  const API_KEY = storageHelpers.getApiKey()
+  const API_KEY = await storageHelpers.getApiKey()
 
   if (!API_KEY) {
     throw new Error(
-      "Gemini API key not found. Please set PLASMO_PUBLIC_GEMINI_API_KEY in .env file."
+      "Gemini API key not found. Please configure your API key in the extension."
     )
   }
 
@@ -37,6 +37,9 @@ Hãy trả về kết quả phân tích dưới dạng markdown format với cá
 - Dùng numbered list (1.) cho câu trả lời có thứ tự
 - Dùng \`code\` cho từ khóa quan trọng
 - Dùng *italic* để nhấn mạnh
+- Dùng tables cho dữ liệu có cấu trúc
+- Dùng --- để ngăn cách giữa các câu hỏi
+- Dùng code block cho các câu hỏi về lập trình, code phải là Javascript 
 
 Ví dụ format:
 ## Câu hỏi 1
@@ -50,7 +53,7 @@ Ví dụ format:
 > **Đáp án:** B. Hà Nội
 
 ---
-
+> Chỉ trả lời câu hỏi hoặc đưa ra đáp án đúng, không cần giải thích gì thêm.
 Trả về markdown thuần túy, không wrap trong code block hay JSON.`
               }
             ]

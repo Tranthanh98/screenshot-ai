@@ -6,14 +6,26 @@ export const storage = new Storage()
 
 // Storage keys
 export const STORAGE_KEYS = {
-  LAST_ANALYSIS: "lastAnalysis"
+  LAST_ANALYSIS: "lastAnalysis",
+  API_KEY: "geminiApiKey"
 } as const
 
 // Helper functions for storage
 export const storageHelpers = {
-  // Get API key from environment variable
-  getApiKey(): string | null {
-    return process.env.PLASMO_PUBLIC_GEMINI_API_KEY || null
+  // Get API key from storage (fallback to env if not set)
+  async getApiKey(): Promise<string | null> {
+    const storedKey = await storage.get(STORAGE_KEYS.API_KEY)
+    return storedKey || process.env.PLASMO_PUBLIC_GEMINI_API_KEY || null
+  },
+
+  // Set API key to storage
+  async setApiKey(apiKey: string): Promise<void> {
+    await storage.set(STORAGE_KEYS.API_KEY, apiKey)
+  },
+
+  // Remove API key from storage
+  async removeApiKey(): Promise<void> {
+    await storage.remove(STORAGE_KEYS.API_KEY)
   },
 
   async getLastAnalysis(): Promise<AnalysisResults | null> {

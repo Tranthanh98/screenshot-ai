@@ -16,9 +16,12 @@ function SidePanelPage() {
   const [inputText, setInputText] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [apiKey, setApiKey] = useStorage<string>("geminiApiKey", "")
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false)
+  const [apiKeyInput, setApiKeyInput] = useState("")
 
   // Check if API key is available
-  const hasApiKey = Boolean(storageHelpers.getApiKey())
+  const hasApiKey = Boolean(apiKey)
 
   // Auto scroll to bottom
   const scrollToBottom = () => {
@@ -291,21 +294,45 @@ function SidePanelPage() {
     }
   }
 
+  const handleSaveApiKey = async () => {
+    const trimmedKey = apiKeyInput.trim()
+    if (!trimmedKey) {
+      setError("Vui lòng nhập API key")
+      return
+    }
+    if (!trimmedKey.startsWith("AIza")) {
+      setError("API key không hợp lệ (phải bắt đầu với 'AIza')")
+      return
+    }
+    await storageHelpers.setApiKey(trimmedKey)
+    setApiKey(trimmedKey)
+    setApiKeyInput("")
+    setShowApiKeyInput(false)
+    setError(null)
+  }
+
+  const handleChangeApiKey = () => {
+    setApiKeyInput(apiKey || "")
+    setShowApiKeyInput(true)
+  }
+
+  const handleRemoveApiKey = async () => {
+    if (confirm("Bạn có chắc muốn xóa API key?")) {
+      await storageHelpers.removeApiKey()
+      setApiKey("")
+      setApiKeyInput("")
+      setShowApiKeyInput(true)
+    }
+  }
+
   return (
     <div className="plasmo-h-screen plasmo-flex plasmo-flex-col plasmo-bg-gray-50">
       {/* Header */}
-      <div className="plasmo-bg-white plasmo-border-b plasmo-border-gray-200 plasmo-p-4 plasmo-flex plasmo-items-center plasmo-justify-between">
-        <div>
+      <div className="plasmo-bg-white plasmo-border-b plasmo-border-gray-200 plasmo-p-4">
+        <div className="plasmo-flex plasmo-items-center plasmo-justify-between plasmo-mb-3">
           <h1 className="plasmo-text-lg plasmo-font-bold plasmo-text-gray-800">
             Screenshot AI Chat
           </h1>
-          {!hasApiKey && (
-            <p className="plasmo-text-xs plasmo-text-red-600">
-              ⚠️ Cần cấu hình API Key
-            </p>
-          )}
-        </div>
-        <div className="plasmo-flex plasmo-space-x-2">
           <button
             onClick={handleClearConversation}
             disabled={messages.length === 0}
@@ -317,6 +344,72 @@ function SidePanelPage() {
             🗑️ Clear
           </button>
         </div>
+
+        {/* API Key Section */}
+        {!hasApiKey || showApiKeyInput ? (
+          <div className="plasmo-p-3 plasmo-bg-yellow-50 plasmo-rounded-lg plasmo-border plasmo-border-yellow-200">
+            <h3 className="plasmo-font-semibold plasmo-text-xs plasmo-mb-1 plasmo-text-yellow-800">
+              🔑 Cấu hình API Key
+            </h3>
+            <p className="plasmo-text-xs plasmo-text-yellow-700 plasmo-mb-2">
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                className="plasmo-underline">
+                Lấy API key miễn phí
+              </a>
+            </p>
+            <div className="plasmo-flex plasmo-space-x-2">
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="Nhập API key..."
+                className="plasmo-flex-1 plasmo-px-2 plasmo-py-1 plasmo-text-xs plasmo-border plasmo-border-gray-300 plasmo-rounded focus:plasmo-outline-none focus:plasmo-ring-1 focus:plasmo-ring-blue-500"
+                onKeyPress={(e) => e.key === "Enter" && handleSaveApiKey()}
+              />
+              <button
+                onClick={handleSaveApiKey}
+                className="plasmo-px-3 plasmo-py-1 plasmo-rounded plasmo-text-xs plasmo-bg-blue-600 plasmo-text-white hover:plasmo-bg-blue-700">
+                Lưu
+              </button>
+              {hasApiKey && (
+                <button
+                  onClick={() => {
+                    setShowApiKeyInput(false)
+                    setApiKeyInput("")
+                    setError(null)
+                  }}
+                  className="plasmo-px-2 plasmo-py-1 plasmo-rounded plasmo-text-xs plasmo-bg-gray-200 plasmo-text-gray-700 hover:plasmo-bg-gray-300">
+                  Hủy
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="plasmo-p-2 plasmo-bg-green-50 plasmo-rounded-lg plasmo-border plasmo-border-green-200 plasmo-flex plasmo-items-center plasmo-justify-between">
+            <div className="plasmo-flex plasmo-items-center">
+              <span className="plasmo-text-green-600 plasmo-mr-1 plasmo-text-xs">
+                ✓
+              </span>
+              <span className="plasmo-text-xs plasmo-text-green-800 plasmo-font-medium">
+                API Key đã cấu hình
+              </span>
+            </div>
+            <div className="plasmo-flex plasmo-space-x-2">
+              <button
+                onClick={handleChangeApiKey}
+                className="plasmo-text-xs plasmo-text-blue-600 hover:plasmo-text-blue-800 plasmo-underline">
+                Đổi
+              </button>
+              <button
+                onClick={handleRemoveApiKey}
+                className="plasmo-text-xs plasmo-text-red-600 hover:plasmo-text-red-800 plasmo-underline">
+                Xóa
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Messages Container */}
