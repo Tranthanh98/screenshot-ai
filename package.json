@@ -29,7 +29,9 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "https://*/*",
+      "http://*/*",
+      "<all_urls>"
     ],
     "permissions": [
       "contextMenus",

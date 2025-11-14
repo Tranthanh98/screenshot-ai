@@ -1,13 +1,14 @@
 import { Storage } from "@plasmohq/storage"
 
-import type { AnalysisResult, AnalysisResults, ScreenshotData } from "~types"
+import type { AIModel, AnalysisResult, AnalysisResults, ScreenshotData } from "~types"
 
 export const storage = new Storage()
 
 // Storage keys
 export const STORAGE_KEYS = {
   LAST_ANALYSIS: "lastAnalysis",
-  API_KEY: "geminiApiKey"
+  API_KEY: "geminiApiKey",
+  SELECTED_MODEL: "selectedAIModel"
 } as const
 
 // Helper functions for storage
@@ -26,6 +27,17 @@ export const storageHelpers = {
   // Remove API key from storage
   async removeApiKey(): Promise<void> {
     await storage.remove(STORAGE_KEYS.API_KEY)
+  },
+
+  // Get selected AI model (default: gemini)
+  async getSelectedModel(): Promise<AIModel> {
+    const model = await storage.get(STORAGE_KEYS.SELECTED_MODEL)
+    return (model as AIModel) || "gemini"
+  },
+
+  // Set selected AI model
+  async setSelectedModel(model: AIModel): Promise<void> {
+    await storage.set(STORAGE_KEYS.SELECTED_MODEL, model)
   },
 
   async getLastAnalysis(): Promise<AnalysisResults | null> {

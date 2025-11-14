@@ -7,6 +7,15 @@ export interface AnalysisResult {
 
 export type AnalysisResults = AnalysisResult[]
 
+export type AIModel = "gemini" | "qwen-local"
+
+export interface ModelConfig {
+  model: AIModel
+  displayName: string
+  description: string
+  requiresApiKey: boolean
+}
+
 export interface ScreenshotData {
   imageBase64: string
   timestamp: number

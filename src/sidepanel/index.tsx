@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { ChatMessageItem } from "~sidepanel/components/ChatMessageItem"
-import type { AnalysisResults, ScreenshotData } from "~types"
+import type { AIModel, AnalysisResults, ScreenshotData } from "~types"
 import { conversationDB, type ChatMessage } from "~utils/db"
 import { storageHelpers } from "~utils/storage"
 
@@ -19,9 +19,13 @@ function SidePanelPage() {
   const [apiKey, setApiKey] = useStorage<string>("geminiApiKey", "")
   const [showApiKeyInput, setShowApiKeyInput] = useState(false)
   const [apiKeyInput, setApiKeyInput] = useState("")
+  const [selectedModel, setSelectedModel] = useStorage<AIModel>(
+    "selectedAIModel",
+    "gemini"
+  )
 
-  // Check if API key is available
-  const hasApiKey = Boolean(apiKey)
+  // Check if API key is available (only for Gemini)
+  const hasApiKey = selectedModel === "qwen-local" || Boolean(apiKey)
 
   // Auto scroll to bottom
   const scrollToBottom = () => {
@@ -139,10 +143,27 @@ function SidePanelPage() {
   const handleTakeScreenshot = () => {
     // Get current active tab and send screenshot message
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (chrome.runtime.lastError) {
+        console.error("Error querying tabs:", chrome.runtime.lastError)
+        setError("Không thể truy cập tab hiện tại. Vui lòng thử lại.")
+        return
+      }
+      
       if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: "START_SCREENSHOT"
-        })
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          { action: "START_SCREENSHOT" },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              console.error("Error sending message:", chrome.runtime.lastError)
+              setError(
+                "Không thể gửi lệnh chụp màn hình. Hãy thử reload trang và thử lại."
+              )
+            }
+          }
+        )
+      } else {
+        setError("Không tìm thấy tab đang hoạt động")
       }
     })
   }
@@ -325,6 +346,11 @@ function SidePanelPage() {
     }
   }
 
+  const handleModelChange = async (model: AIModel) => {
+    await storageHelpers.setSelectedModel(model)
+    setSelectedModel(model)
+  }
+
   return (
     <div className="plasmo-h-screen plasmo-flex plasmo-flex-col plasmo-bg-gray-50">
       {/* Header */}
@@ -345,8 +371,38 @@ function SidePanelPage() {
           </button>
         </div>
 
-        {/* API Key Section */}
-        {!hasApiKey || showApiKeyInput ? (
+        {/* Model Selection */}
+        <div className="plasmo-mb-3">
+          <label className="plasmo-text-xs plasmo-text-gray-600 plasmo-mb-1 plasmo-block">
+            🤖 AI Model:
+          </label>
+          <div className="plasmo-flex plasmo-space-x-2">
+            <button
+              onClick={() => handleModelChange("gemini")}
+              className={`plasmo-flex-1 plasmo-px-3 plasmo-py-2 plasmo-text-xs plasmo-rounded plasmo-border plasmo-transition-colors ${
+                selectedModel === "gemini"
+                  ? "plasmo-bg-blue-500 plasmo-text-white plasmo-border-blue-600"
+                  : "plasmo-bg-white plasmo-text-gray-700 plasmo-border-gray-300 hover:plasmo-bg-gray-50"
+              }`}>
+              <div className="plasmo-font-medium">Gemini</div>
+              <div className="plasmo-text-xs plasmo-opacity-75">Cloud API</div>
+            </button>
+            <button
+              onClick={() => handleModelChange("qwen-local")}
+              className={`plasmo-flex-1 plasmo-px-3 plasmo-py-2 plasmo-text-xs plasmo-rounded plasmo-border plasmo-transition-colors ${
+                selectedModel === "qwen-local"
+                  ? "plasmo-bg-purple-500 plasmo-text-white plasmo-border-purple-600"
+                  : "plasmo-bg-white plasmo-text-gray-700 plasmo-border-gray-300 hover:plasmo-bg-gray-50"
+              }`}>
+              <div className="plasmo-font-medium">Qwen VL</div>
+              <div className="plasmo-text-xs plasmo-opacity-75">Local</div>
+            </button>
+          </div>
+        </div>
+
+        {/* API Key Section - Only show for Gemini */}
+        {selectedModel === "gemini" &&
+          (!hasApiKey || showApiKeyInput ? (
           <div className="plasmo-p-3 plasmo-bg-yellow-50 plasmo-rounded-lg plasmo-border plasmo-border-yellow-200">
             <h3 className="plasmo-font-semibold plasmo-text-xs plasmo-mb-1 plasmo-text-yellow-800">
               🔑 Cấu hình API Key
@@ -407,6 +463,29 @@ function SidePanelPage() {
                 className="plasmo-text-xs plasmo-text-red-600 hover:plasmo-text-red-800 plasmo-underline">
                 Xóa
               </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Qwen Local Info */}
+        {selectedModel === "qwen-local" && (
+          <div className="plasmo-p-2 plasmo-bg-purple-50 plasmo-rounded-lg plasmo-border plasmo-border-purple-200">
+            <div className="plasmo-flex plasmo-items-start">
+              <span className="plasmo-text-purple-600 plasmo-mr-1 plasmo-text-xs">
+                ℹ️
+              </span>
+              <div className="plasmo-text-xs plasmo-text-purple-800">
+                <div className="plasmo-font-medium plasmo-mb-1">
+                  Sử dụng LM Studio Local
+                </div>
+                <div className="plasmo-opacity-75">
+                  Đảm bảo LM Studio đang chạy tại{" "}
+                  <span className="plasmo-font-mono">
+                    http://127.0.0.1:1234
+                  </span>{" "}
+                  với model <span className="plasmo-font-mono">qwen-vl-4b</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

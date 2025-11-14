@@ -1,5 +1,6 @@
 import { analyzeImageWithGemini } from "~lib/analyzeImageWithGemini"
 import { analyzeTextWithGemini } from "~lib/analyzeTextWithGemini"
+import { analyzeImageWithQwen, analyzeTextWithQwen } from "~lib/analyzeWithQwen"
 import type { ScreenshotData } from "~types"
 import { storageHelpers } from "~utils/storage"
 
@@ -175,35 +176,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     storageHelpers.setIsAnalyzing(true)
     updateContextMenus()
 
-    // Gọi Gemini AI API để phân tích
-    analyzeImageWithGemini(imageBase64)
-      .then((result) => {
-        // Lưu kết quả vào storage
-        storageHelpers.setLastAnalysis(result)
+    // Get selected model
+    storageHelpers.getSelectedModel().then((selectedModel) => {
+      const analyzeFunction =
+        selectedModel === "qwen-local"
+          ? analyzeImageWithQwen
+          : analyzeImageWithGemini
 
-        // Reset analyzing state
-        isAnalyzing = false
-        storageHelpers.setIsAnalyzing(false)
-        updateContextMenus()
+      // Gọi AI API để phân tích
+      analyzeFunction(imageBase64)
+        .then((result) => {
+          // Lưu kết quả vào storage
+          storageHelpers.setLastAnalysis(result)
 
-        // Thông báo cho popup và sidepanel cập nhật
-        chrome.runtime.sendMessage({
-          action: "ANALYSIS_COMPLETE",
-          result
+          // Reset analyzing state
+          isAnalyzing = false
+          storageHelpers.setIsAnalyzing(false)
+          updateContextMenus()
+
+          // Thông báo cho popup và sidepanel cập nhật
+          chrome.runtime.sendMessage({
+            action: "ANALYSIS_COMPLETE",
+            result
+          })
         })
-      })
-      .catch((error) => {
-        console.error("Error analyzing image:", error)
+        .catch((error) => {
+          console.error("Error analyzing image:", error)
 
-        // Reset analyzing state
-        isAnalyzing = false
-        updateContextMenus()
+          // Reset analyzing state
+          isAnalyzing = false
+          updateContextMenus()
 
-        chrome.runtime.sendMessage({
-          action: "ANALYSIS_ERROR",
-          error: error.message
+          chrome.runtime.sendMessage({
+            action: "ANALYSIS_ERROR",
+            error: error.message
+          })
         })
-      })
+    })
   }
 
   if (message.action === "ANALYZE_TEXT_QUESTION") {
@@ -214,38 +223,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     storageHelpers.setIsAnalyzing(true)
     updateContextMenus()
 
-    // Analyze text question with Gemini
-    analyzeTextWithGemini(question)
-      .then((result) => {
-        // Save result to storage
-        storageHelpers.setLastAnalysis(result)
+    // Get selected model
+    storageHelpers.getSelectedModel().then((selectedModel) => {
+      const analyzeFunction =
+        selectedModel === "qwen-local"
+          ? analyzeTextWithQwen
+          : analyzeTextWithGemini
 
-        // Reset analyzing state
-        isAnalyzing = false
-        storageHelpers.setIsAnalyzing(false)
-        updateContextMenus()
+      // Analyze text question with selected AI
+      analyzeFunction(question)
+        .then((result) => {
+          // Save result to storage
+          storageHelpers.setLastAnalysis(result)
 
-        // Notify components
-        chrome.runtime.sendMessage({
-          action: "ANALYSIS_COMPLETE",
-          result,
-          messageId
+          // Reset analyzing state
+          isAnalyzing = false
+          storageHelpers.setIsAnalyzing(false)
+          updateContextMenus()
+
+          // Notify components
+          chrome.runtime.sendMessage({
+            action: "ANALYSIS_COMPLETE",
+            result,
+            messageId
+          })
         })
-      })
-      .catch((error) => {
-        console.error("Error analyzing text question:", error)
+        .catch((error) => {
+          console.error("Error analyzing text question:", error)
 
-        // Reset analyzing state
-        isAnalyzing = false
-        storageHelpers.setIsAnalyzing(false)
-        updateContextMenus()
+          // Reset analyzing state
+          isAnalyzing = false
+          storageHelpers.setIsAnalyzing(false)
+          updateContextMenus()
 
-        chrome.runtime.sendMessage({
-          action: "ANALYSIS_ERROR",
-          error: error.message,
-          messageId
+          chrome.runtime.sendMessage({
+            action: "ANALYSIS_ERROR",
+            error: error.message,
+            messageId
+          })
         })
-      })
+    })
   }
 })
 
